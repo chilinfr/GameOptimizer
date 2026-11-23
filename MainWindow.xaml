@@ -1,0 +1,1105 @@
+<Window x:Class="GameOptimizer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:GameOptimizer"
+        Title="GameOptimizer"
+        Width="1340"
+        Height="900"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        FontFamily="Segoe UI"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        TextOptions.TextFormattingMode="Display"
+        Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <DataTemplate x:Key="TweakCardTemplate">
+            <Border Style="{StaticResource Card}" Width="470" Margin="0,0,14,14" Padding="18">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="{Binding Title}" Style="{StaticResource CardTitle}" />
+                            <TextBlock Text="{Binding CategoryName}"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       FontSize="9.5"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+                        <ToggleButton Grid.Column="1"
+                                      Style="{StaticResource ToggleSwitch}"
+                                      IsChecked="{Binding IsOn, Mode=OneWay}"
+                                      Command="{Binding ToggleCommand}"
+                                      IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}"
+                                      ToolTip="Применить или откатить твик" />
+                    </Grid>
+
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding Description}"
+                               TextWrapping="Wrap"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontSize="11.5"
+                               LineHeight="17"
+                               Margin="0,11,0,0" />
+
+                    <Grid Grid.Row="2" Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Background="{Binding Risk, Converter={StaticResource RiskToBackground}}"
+                                CornerRadius="6"
+                                Padding="7,3"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="{Binding RiskLabel}"
+                                       Foreground="{Binding Risk, Converter={StaticResource RiskToForeground}}"
+                                       FontSize="8.5"
+                                       FontWeight="Bold" />
+                        </Border>
+
+                        <Border Grid.Column="1"
+                                Background="#1A2433"
+                                CornerRadius="6"
+                                Padding="7,3"
+                                Margin="6,0,0,0"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding RequiresReboot, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="REBOOT"
+                                       Foreground="{StaticResource AccentBlueBrush}"
+                                       FontSize="8.5"
+                                       FontWeight="Bold" />
+                        </Border>
+
+                        <TextBlock Grid.Column="3"
+                                   Text="{Binding StatusText}"
+                                   FontSize="10"
+                                   VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsOn}" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid Margin="18">
+        <Border CornerRadius="22"
+                Background="{StaticResource WindowBgBrush}"
+                BorderBrush="#2B2842"
+                BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect Color="#04030A" BlurRadius="36" ShadowDepth="0" Opacity="0.6" />
+            </Border.Effect>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="244" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="62" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- ==================== SIDEBAR ==================== -->
+                <Border Grid.Column="0"
+                        Grid.RowSpan="2"
+                        Background="#1A1928"
+                        CornerRadius="21,0,0,21"
+                        BorderBrush="#2A2840"
+                        BorderThickness="0,0,1,0">
+                    <Grid Margin="0,18,0,18">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="20,4,20,22">
+                            <Border Width="42" Height="42" CornerRadius="13" Background="{StaticResource AccentGradient}">
+                                <Path Data="M13,2 L5,13 H11 L10,22 L19,9 H12 Z"
+                                      Fill="White"
+                                      Width="20"
+                                      Height="20"
+                                      Stretch="Uniform" />
+                            </Border>
+                            <StackPanel Margin="12,2,0,0" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="GAME" Foreground="White" FontSize="14" FontWeight="Bold" />
+                                    <TextBlock Text=" OPTIMIZER" Foreground="{StaticResource AccentBlueBrush}" FontSize="14" FontWeight="Bold" />
+                                </StackPanel>
+                                <TextBlock Text="NATIVE · WINDOWS 10/11"
+                                           Foreground="{StaticResource TextMutedBrush}"
+                                           FontSize="8.5"
+                                           Margin="0,4,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <ListBox x:Name="NavList"
+                                 Grid.Row="1"
+                                 Style="{StaticResource NavList}"
+                                 ItemsSource="{Binding NavItems}"
+                                 SelectedIndex="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="{Binding Icon}"
+                                              Width="19"
+                                              Height="19"
+                                              Stretch="Uniform"
+                                              StrokeThickness="1.6"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              StrokeLineJoin="Round"
+                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
+                                        <TextBlock Text="{Binding Title}"
+                                                   Margin="12,0,0,0"
+                                                   FontSize="12"
+                                                   FontWeight="Medium"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <StackPanel Grid.Row="2" Margin="16,14,16,0">
+                            <Border Style="{StaticResource InnerCard}" Padding="13,11">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" Fill="{StaticResource SuccessBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Text="SYSTEM PROTECTED"
+                                                   Foreground="{StaticResource SuccessBrush}"
+                                                   FontSize="9"
+                                                   FontWeight="Bold"
+                                                   Margin="7,0,0,0" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding RestorePointStatus}"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               FontSize="10"
+                                               TextWrapping="Wrap"
+                                               Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Grid Margin="2,12,2,0">
+                                <TextBlock Text="{Binding AppVersion}" Foreground="{StaticResource TextMutedBrush}" FontSize="9.5" />
+                                <TextBlock Text="x64 · .NET 8"
+                                           HorizontalAlignment="Right"
+                                           Foreground="{StaticResource TextMutedBrush}"
+                                           FontSize="9.5" />
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ==================== TOP BAR ==================== -->
+                <Grid Grid.Column="1"
+                      Grid.Row="0"
+                      Margin="26,0,16,0"
+                      MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox x:Name="SearchInput"
+                             Style="{StaticResource SearchBox}"
+                             Width="360"
+                             HorizontalAlignment="Left"
+                             VerticalAlignment="Center"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             KeyDown="SearchInput_KeyDown" />
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource GhostButton}"
+                                Command="{Binding CreateRestorePointCommand}"
+                                Margin="0,0,10,0"
+                                ToolTip="Создать точку восстановления Windows">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="M12,2 L20,5 V11 C20,16 16.5,19.5 12,22 C7.5,19.5 4,16 4,11 V5 Z"
+                                      Width="13"
+                                      Height="13"
+                                      Stretch="Uniform"
+                                      Stroke="{StaticResource AccentTealBrush}"
+                                      StrokeThickness="1.5"
+                                      VerticalAlignment="Center" />
+                                <TextBlock Text="RESTORE POINT" FontSize="10.5" FontWeight="Bold" Margin="7,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Border Background="#14251F"
+                                BorderBrush="#1F5040"
+                                BorderThickness="1"
+                                CornerRadius="9"
+                                Padding="9,5"
+                                Margin="0,0,12,0"
+                                VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="6" Height="6" Fill="{Binding AdminBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding AdminLabel}"
+                                           Foreground="{Binding AdminBrush}"
+                                           FontSize="9"
+                                           FontWeight="Bold"
+                                           Margin="6,0,0,0" />
+                            </StackPanel>
+                        </Border>
+
+                        <Button Style="{StaticResource WindowControlButton}" Click="Minimize_Click" ToolTip="Свернуть">
+                            <Path Data="M5,12 H19" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.6" Width="14" Height="14" Stretch="Uniform" />
+                        </Button>
+                        <Button Style="{StaticResource WindowControlButton}" Click="Close_Click" ToolTip="Закрыть" Margin="2,0,0,0">
+                            <Path Data="M6,6 L18,18 M18,6 L6,18" Stroke="{StaticResource TextSecondaryBrush}" StrokeThickness="1.6" Width="13" Height="13" Stretch="Uniform" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- ==================== CONTENT ==================== -->
+                <Grid Grid.Column="1" Grid.Row="1">
+                    <TabControl x:Name="Pages"
+                                Style="{StaticResource DashboardTabControl}"
+                                SelectedIndex="{Binding SelectedIndex, ElementName=NavList, Mode=TwoWay}">
+
+                        <!-- ========== DASHBOARD ========== -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="30,20,30,30">
+                                    <Grid>
+                                        <StackPanel>
+                                            <TextBlock Text="Dashboard" Style="{StaticResource PageTitle}" />
+                                            <TextBlock Text="Живой мониторинг и пресеты в один клик" Style="{StaticResource PageSubtitle}" />
+                                        </StackPanel>
+                                        <Border HorizontalAlignment="Right"
+                                                VerticalAlignment="Center"
+                                                Background="#14251F"
+                                                BorderBrush="#1F5040"
+                                                BorderThickness="1"
+                                                CornerRadius="9"
+                                                Padding="10,6">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="6" Height="6" Fill="{StaticResource SuccessBrush}" VerticalAlignment="Center" />
+                                                <TextBlock Text="LIVE" Foreground="{StaticResource SuccessBrush}" FontSize="9" FontWeight="Bold" Margin="6,0,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+
+                                    <Border Style="{StaticResource Card}"
+                                            Margin="0,22,0,0"
+                                            Padding="24"
+                                            CornerRadius="20"
+                                            Background="#1C1A2C"
+                                            BorderBrush="{StaticResource AccentGradient}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="1.15*" />
+                                                <ColumnDefinition Width="1*" />
+                                                <ColumnDefinition Width="0.95*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" Margin="0,0,26,0">
+                                                <TextBlock Text="ОПТИМИЗАЦИЯ СИСТЕМЫ"
+                                                           Foreground="{StaticResource AccentPurpleBrush}"
+                                                           FontSize="9.5"
+                                                           FontWeight="Bold" />
+                                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                    <TextBlock Text="{Binding AppliedCountText}"
+                                                               Foreground="White"
+                                                               FontSize="44"
+                                                               FontWeight="Bold"
+                                                               LineHeight="48" />
+                                                    <TextBlock Text="{Binding TweakCountText}"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="15"
+                                                               VerticalAlignment="Bottom"
+                                                               Margin="6,0,0,8" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding TweakSummaryText}"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontSize="11"
+                                                           TextWrapping="Wrap" />
+                                                <ProgressBar Value="{Binding OptimizationPercent, Mode=OneWay}" Margin="0,16,0,0" Height="7" />
+                                                <TextBlock Text="SYSTEM ONLINE · REAL-TIME"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           FontSize="8.5"
+                                                           FontWeight="SemiBold"
+                                                           Margin="0,12,0,0" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1" Margin="0,0,22,0">
+                                                <TextBlock Text="CPU LOAD"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           FontSize="9.5"
+                                                           FontWeight="Bold" />
+                                                <TextBlock Text="{Binding CpuUsageText}"
+                                                           Foreground="White"
+                                                           FontSize="36"
+                                                           FontWeight="SemiBold"
+                                                           Margin="0,4,0,0" />
+                                                <ProgressBar Value="{Binding CpuUsage, Mode=OneWay}" Height="5" Margin="0,8,0,0" Foreground="{StaticResource CoolGradient}" />
+                                                <Canvas Height="54" Margin="0,10,0,0" ClipToBounds="True">
+                                                    <Polyline Points="{Binding CpuGraphPoints}"
+                                                              Stroke="{StaticResource AccentBlueBrush}"
+                                                              StrokeThickness="1.8"
+                                                              StrokeLineJoin="Round"
+                                                              Opacity="0.9" />
+                                                </Canvas>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock Text="MEMORY"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           FontSize="9.5"
+                                                           FontWeight="Bold" />
+                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding MemUsedText}"
+                                                               Foreground="White"
+                                                               FontSize="36"
+                                                               FontWeight="SemiBold" />
+                                                    <TextBlock Text="{Binding MemTotalText}"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="11"
+                                                               VerticalAlignment="Bottom"
+                                                               Margin="7,0,0,6" />
+                                                </StackPanel>
+                                                <ProgressBar Value="{Binding MemUsage, Mode=OneWay}" Height="5" Margin="0,8,0,0" />
+                                                <Grid Margin="0,12,0,0">
+                                                    <TextBlock Text="{Binding MemFreeText}"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               FontSize="10" />
+                                                    <TextBlock Text="{Binding UptimeText}"
+                                                               HorizontalAlignment="Right"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="10" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <Grid Margin="0,16,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Grid.Column="0" Style="{StaticResource Card}" Padding="16" Margin="0,0,8,0">
+                                            <Grid>
+                                                <StackPanel>
+                                                    <TextBlock Text="HAGS"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="9.5"
+                                                               FontWeight="Bold" />
+                                                    <TextBlock Text="{Binding HagsStatus}"
+                                                               Foreground="White"
+                                                               FontSize="19"
+                                                               FontWeight="SemiBold"
+                                                               Margin="0,7,0,0" />
+                                                    <TextBlock Text="Аппаратное планирование GPU"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="9.5"
+                                                               Margin="0,5,0,0" />
+                                                </StackPanel>
+                                                <Ellipse Width="9" Height="9" Fill="{Binding HagsBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,3,0,0" />
+                                            </Grid>
+                                        </Border>
+
+                                        <Border Grid.Column="1" Style="{StaticResource Card}" Padding="16" Margin="4,0,4,0">
+                                            <Grid>
+                                                <StackPanel>
+                                                    <TextBlock Text="GAME MODE"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="9.5"
+                                                               FontWeight="Bold" />
+                                                    <TextBlock Text="{Binding GameModeStatus}"
+                                                               Foreground="White"
+                                                               FontSize="19"
+                                                               FontWeight="SemiBold"
+                                                               Margin="0,7,0,0" />
+                                                    <TextBlock Text="Приоритет активной игры"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="9.5"
+                                                               Margin="0,5,0,0" />
+                                                </StackPanel>
+                                                <Ellipse Width="9" Height="9" Fill="{Binding GameModeBrush}" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,3,0,0" />
+                                            </Grid>
+                                        </Border>
+
+                                        <Border Grid.Column="2" Style="{StaticResource Card}" Padding="16" Margin="8,0,0,0">
+                                            <Grid>
+                                                <StackPanel>
+                                                    <TextBlock Text="POWER PLAN"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="9.5"
+                                                               FontWeight="Bold" />
+                                                    <TextBlock Text="{Binding ActivePlanName}"
+                                                               Foreground="White"
+                                                               FontSize="15"
+                                                               FontWeight="SemiBold"
+                                                               Margin="0,9,0,0"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="Активная схема электропитания"
+                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                               FontSize="9.5"
+                                                               Margin="0,6,0,0" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Grid>
+
+                                    <Grid Margin="0,26,0,11">
+                                        <TextBlock Text="БЫСТРЫЕ ПРЕСЕТЫ" Style="{StaticResource SectionCaption}" Margin="2,0,0,0" />
+                                        <TextBlock Text="автоматически создаёт точку восстановления"
+                                                   HorizontalAlignment="Right"
+                                                   Foreground="{StaticResource TextMutedBrush}"
+                                                   FontSize="9.5" />
+                                    </Grid>
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Button Grid.Column="0" Style="{StaticResource PresetButton}" Margin="0,0,8,0"
+                                                Command="{Binding ApplyPresetCommand}" CommandParameter="esports">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="3" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Background="{StaticResource AccentGradient}" CornerRadius="2" Margin="0,2,12,2" />
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="ESPORTS PRO" Foreground="White" FontSize="12" FontWeight="Bold" />
+                                                    <TextBlock Text="Максимум FPS и минимальный инпут-лаг"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               FontSize="10"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,6,0,0" />
+                                                </StackPanel>
+                                                <Path Grid.Column="2" Data="M8,5 L16,12 L8,19" Stroke="{StaticResource AccentPurpleBrush}"
+                                                      StrokeThickness="1.7" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Button>
+
+                                        <Button Grid.Column="1" Style="{StaticResource PresetButton}" Margin="4,0,4,0"
+                                                Command="{Binding ApplyPresetCommand}" CommandParameter="balanced">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="3" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Background="{StaticResource CoolGradient}" CornerRadius="2" Margin="0,2,12,2" />
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="BALANCED GAMING" Foreground="White" FontSize="12" FontWeight="Bold" />
+                                                    <TextBlock Text="Безопасно, без отключения служб"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               FontSize="10"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,6,0,0" />
+                                                </StackPanel>
+                                                <Path Grid.Column="2" Data="M8,5 L16,12 L8,19" Stroke="{StaticResource AccentTealBrush}"
+                                                      StrokeThickness="1.7" Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Button>
+
+                                        <Button Grid.Column="2" Style="{StaticResource PresetButton}" Margin="8,0,0,0"
+                                                Command="{Binding ApplyPresetCommand}" CommandParameter="stock">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="3" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Background="{StaticResource DangerBrush}" CornerRadius="2" Margin="0,2,12,2" />
+                                                <StackPanel Grid.Column="1">
+                                                    <TextBlock Text="RESTORE STOCK" Foreground="{StaticResource DangerBrush}" FontSize="12" FontWeight="Bold" />
+                                                    <TextBlock Text="Полный откат изменений GameOptimizer"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               FontSize="10"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,6,0,0" />
+                                                </StackPanel>
+                                                <Path Grid.Column="2" Data="M4,12 A8,8 0 1 0 7,6 M4,3 V8 H9" Stroke="{StaticResource DangerBrush}"
+                                                      StrokeThickness="1.6" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Button>
+                                    </Grid>
+
+                                    <Border Style="{StaticResource Card}" Margin="0,18,0,0" Padding="18,16">
+                                        <StackPanel>
+                                            <TextBlock Text="КОНФИГУРАЦИЯ" Style="{StaticResource SectionCaption}" Margin="0,0,0,12" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="1.2*" />
+                                                    <ColumnDefinition Width="1.2*" />
+                                                    <ColumnDefinition Width="1*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+
+                                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,16,14">
+                                                    <TextBlock Text="PROCESSOR" Foreground="{StaticResource TextMutedBrush}" FontSize="8.5" FontWeight="Bold" />
+                                                    <TextBlock Text="{Binding CpuName}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,16,14">
+                                                    <TextBlock Text="GRAPHICS" Foreground="{StaticResource TextMutedBrush}" FontSize="8.5" FontWeight="Bold" />
+                                                    <TextBlock Text="{Binding GpuName}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,14">
+                                                    <TextBlock Text="CORES / RAM" Foreground="{StaticResource TextMutedBrush}" FontSize="8.5" FontWeight="Bold" />
+                                                    <TextBlock Foreground="{StaticResource TextPrimaryBrush}" FontSize="11" Margin="0,5,0,0">
+                                                        <Run Text="{Binding CoreCountText, Mode=OneWay}" />
+                                                        <Run Text=" · " Foreground="{StaticResource TextMutedBrush}" />
+                                                        <Run Text="{Binding RamInstalledText, Mode=OneWay}" />
+                                                    </TextBlock>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,16,0">
+                                                    <TextBlock Text="OPERATING SYSTEM" Foreground="{StaticResource TextMutedBrush}" FontSize="8.5" FontWeight="Bold" />
+                                                    <TextBlock Text="{Binding OsName}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Row="1" Grid.Column="2">
+                                                    <TextBlock Text="ADAPTERS" Foreground="{StaticResource TextMutedBrush}" FontSize="8.5" FontWeight="Bold" />
+                                                    <TextBlock Text="{Binding NetworkAdaptersText}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="10.5" TextWrapping="Wrap" Margin="0,5,0,0" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- ========== DEEP KERNEL & BCD ========== -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="30,20,30,30">
+                                    <TextBlock Text="Deep Kernel &amp; BCD" Style="{StaticResource PageTitle}" />
+                                    <TextBlock Text="Таймеры ядра, MMCSS и скрытые параметры загрузчика" Style="{StaticResource PageSubtitle}" />
+
+                                    <Border Style="{StaticResource Card}" Margin="0,22,0,16" Padding="20">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="360" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,24,0">
+                                                <TextBlock Text="Win32PrioritySeparation" Style="{StaticResource CardTitle}" />
+                                                <TextBlock Text="Управляет длиной квантов CPU и приоритетом активного окна. 0x2A (42) — максимальный отклик в играх, 0x26 (38) — короткие кванты, 2 — баланс Windows."
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontSize="11.5"
+                                                           TextWrapping="Wrap"
+                                                           LineHeight="17"
+                                                           Margin="0,8,0,0" />
+                                                <TextBlock Text="{Binding PriorityCurrentText}"
+                                                           Foreground="{StaticResource AccentBlueBrush}"
+                                                           FontSize="11"
+                                                           FontWeight="SemiBold"
+                                                           Margin="0,12,0,0" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <ComboBox Style="{StaticResource DarkComboBox}"
+                                                          ItemsSource="{Binding PriorityOptions}"
+                                                          SelectedItem="{Binding SelectedPriority, Mode=TwoWay}" />
+                                                <Button Style="{StaticResource PrimaryButton}"
+                                                        Command="{Binding ApplyPriorityCommand}"
+                                                        Content="ПРИМЕНИТЬ ПРИОРИТЕТ"
+                                                        Margin="0,9,0,0" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <TextBlock Text="СИСТЕМНЫЕ ТВИКИ" Style="{StaticResource SectionCaption}" Margin="2,6,0,10" />
+                                    <ItemsControl ItemsSource="{Binding KernelTweaks}" ItemTemplate="{StaticResource TweakCardTemplate}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- ========== GPU & INTERRUPTS ========== -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="30,20,30,30">
+                                    <TextBlock Text="GPU &amp; Interrupts" Style="{StaticResource PageTitle}" />
+                                    <TextBlock Text="Видеокарта, MSI mode, прерывания и задержки драйвера" Style="{StaticResource PageSubtitle}" />
+
+                                    <Border Style="{StaticResource Card}" Margin="0,22,0,16" Padding="20">
+                                        <StackPanel>
+                                            <Grid>
+                                                <StackPanel>
+                                                    <TextBlock Text="Message Signaled Interrupts (MSI)" Style="{StaticResource CardTitle}" />
+                                                    <TextBlock Text="MSI убирает разделяемые line-interrupts и снижает задержку. DevicePriority = High (3). Не все устройства поддерживают MSI; после изменения нужна перезагрузка."
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               FontSize="11"
+                                                               TextWrapping="Wrap"
+                                                               LineHeight="16"
+                                                               Margin="0,7,0,0" />
+                                                </StackPanel>
+                                                <Button Style="{StaticResource GhostButton}"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Top"
+                                                        Command="{Binding RefreshDevicesCommand}"
+                                                        Content="ОБНОВИТЬ СПИСОК" />
+                                            </Grid>
+
+                                            <ScrollViewer MaxHeight="316" VerticalScrollBarVisibility="Auto" Margin="0,14,0,0">
+                                                <ItemsControl ItemsSource="{Binding PciDevices}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Style="{StaticResource InnerCard}" Margin="0,0,0,7" Padding="12,10">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <StackPanel Margin="0,0,12,0">
+                                                                        <TextBlock Text="{Binding Name}"
+                                                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                                                   FontSize="11.5"
+                                                                                   TextTrimming="CharacterEllipsis" />
+                                                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                                            <TextBlock Text="{Binding KindLabel}"
+                                                                                       Foreground="{StaticResource AccentPurpleBrush}"
+                                                                                       FontSize="9"
+                                                                                       FontWeight="Bold" />
+                                                                            <TextBlock Text="{Binding StatusText}"
+                                                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                                                       FontSize="9"
+                                                                                       Margin="8,0,0,0" />
+                                                                        </StackPanel>
+                                                                    </StackPanel>
+                                                                    <ToggleButton Grid.Column="1"
+                                                                                  Style="{StaticResource ToggleSwitch}"
+                                                                                  IsChecked="{Binding IsMsiEnabled, Mode=OneWay}"
+                                                                                  Command="{Binding ToggleCommand}"
+                                                                                  IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}"
+                                                                                  VerticalAlignment="Center" />
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+
+                                            <TextBlock Text="{Binding PciSummaryText}"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       FontSize="9.5"
+                                                       Margin="0,10,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <TextBlock Text="GPU, LATENCY &amp; FRAME PACING" Style="{StaticResource SectionCaption}" Margin="2,6,0,10" />
+                                    <ItemsControl ItemsSource="{Binding GpuTweaks}" ItemTemplate="{StaticResource TweakCardTemplate}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- ========== CPU & POWER ========== -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="30,20,30,30">
+                                    <TextBlock Text="CPU &amp; Power" Style="{StaticResource PageTitle}" />
+                                    <TextBlock Text="Схемы питания, C-States и привязка прерываний к ядрам" Style="{StaticResource PageSubtitle}" />
+
+                                    <Border Style="{StaticResource Card}" Margin="0,22,0,16" Padding="20">
+                                        <StackPanel>
+                                            <TextBlock Text="Interrupt Affinity (USB / GPU)" Style="{StaticResource CardTitle}" />
+                                            <TextBlock Text="Привяжите прерывания USB-контроллера (мышь/клавиатура) и GPU к отдельному ядру, чтобы разгрузить Core 0. AssignmentSetOverride = битовая маска, DevicePolicy = 4. Нужна перезагрузка."
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       FontSize="11"
+                                                       TextWrapping="Wrap"
+                                                       LineHeight="16"
+                                                       Margin="0,7,0,13" />
+
+                                            <ItemsControl ItemsSource="{Binding AffinityDevices}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border Style="{StaticResource InnerCard}" Margin="0,0,0,7" Padding="12,9">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="Auto" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding Name}"
+                                                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                                                               FontSize="11.5"
+                                                                               TextTrimming="CharacterEllipsis" />
+                                                                    <TextBlock Foreground="{StaticResource TextMutedBrush}" FontSize="9" Margin="0,4,0,0">
+                                                                        <Run Text="{Binding KindLabel, Mode=OneWay}" />
+                                                                        <Run Text=" · current: " />
+                                                                        <Run Text="{Binding AssignedText, Mode=OneWay}" />
+                                                                    </TextBlock>
+                                                                </StackPanel>
+                                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                    <ComboBox Style="{StaticResource DarkComboBox}"
+                                                                              Width="150"
+                                                                              ItemsSource="{Binding CoreOptions}"
+                                                                              SelectedItem="{Binding SelectedCore, Mode=TwoWay}" />
+                                                                    <Button Style="{StaticResource GhostButton}"
+                                                                            Command="{Binding ApplyCommand}"
+                                                                            Content="ПРИМЕНИТЬ"
+                                                                            Margin="8,0,0,0"
+                                                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBool}}" />
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <TextBlock Text="{Binding AffinitySummaryText}"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       FontSize="9.5"
+                                                       Margin="0,9,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <TextBlock Text="POWER &amp; SCHEDULER" Style="{StaticResource SectionCaption}" Margin="2,6,0,10" />
+                                    <ItemsControl ItemsSource="{Binding CpuTweaks}" ItemTemplate="{StaticResource TweakCardTemplate}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- ========== MEMORY & STORAGE ========== -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="30,20,30,30">
+                                    <TextBlock Text="Memory &amp; Storage" Style="{StaticResource PageTitle}" />
+                                    <TextBlock Text="ОЗУ, кэш, NVMe/SSD и фоновые службы" Style="{StaticResource PageSubtitle}" />
+
+                                    <Border Style="{StaticResource Card}" Margin="0,22,0,16" Padding="20">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Margin="0,0,20,0">
+                                                <TextBlock Text="Purge Standby List" Style="{StaticResource CardTitle}" />
+                                                <TextBlock Text="Мгновенно очищает кэшированный Standby List через NtSetSystemInformation (SystemMemoryListInformation = 80). Освобождает физическую ОЗУ без перезагрузки."
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontSize="11"
+                                                           TextWrapping="Wrap"
+                                                           LineHeight="16"
+                                                           Margin="0,7,0,0" />
+                                                <TextBlock Text="{Binding StandbyResultText}"
+                                                           Foreground="{StaticResource AccentTealBrush}"
+                                                           FontSize="10"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,10,0,0" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding MemFreeText}"
+                                                           Foreground="White"
+                                                           FontSize="17"
+                                                           FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" />
+                                                <Button Style="{StaticResource PrimaryButton}"
+                                                        Command="{Binding PurgeStandbyCommand}"
+                                                        Content="PURGE STANDBY LIST"
+                                                        Margin="0,9,0,0" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+
+                                    <TextBlock Text="MEMORY &amp; SERVICES" Style="{StaticResource SectionCaption}" Margin="2,6,0,10" />
+                                    <ItemsControl ItemsSource="{Binding MemoryTweaks}" ItemTemplate="{StaticResource TweakCardTemplate}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- ========== NETWORK & HITREG ========== -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="30,20,30,30">
+                                    <TextBlock Text="Network &amp; Hitreg" Style="{StaticResource PageTitle}" />
+                                    <TextBlock Text="TCP/IP, Nagle, RSS и энергосбережение адаптера" Style="{StaticResource PageSubtitle}" />
+
+                                    <Border Style="{StaticResource InnerCard}" Margin="0,22,0,16" Padding="16,13">
+                                        <StackPanel>
+                                            <TextBlock Text="АКТИВНЫЕ СЕТЕВЫЕ АДАПТЕРЫ" Style="{StaticResource SectionCaption}" Margin="0,0,0,7" />
+                                            <TextBlock Text="{Binding NetworkAdaptersText}"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       FontSize="11"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <TextBlock Text="TCP/IP STACK &amp; ADAPTER" Style="{StaticResource SectionCaption}" Margin="2,4,0,10" />
+                                    <ItemsControl ItemsSource="{Binding NetworkTweaks}" ItemTemplate="{StaticResource TweakCardTemplate}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- ========== BACKUPS & CONFIG ========== -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Margin="30,20,30,30">
+                                    <TextBlock Text="Backups &amp; Config" Style="{StaticResource PageTitle}" />
+                                    <TextBlock Text="Точки восстановления, журнал изменений и профили" Style="{StaticResource PageSubtitle}" />
+
+                                    <Grid Margin="0,22,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,8,8">
+                                            <StackPanel>
+                                                <TextBlock Text="ТОЧКА ВОССТАНОВЛЕНИЯ" Style="{StaticResource SectionCaption}" />
+                                                <TextBlock Text="{Binding RestorePointStatus}"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           FontSize="13"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,12" />
+                                                <Button Style="{StaticResource PrimaryButton}"
+                                                        Command="{Binding CreateRestorePointCommand}"
+                                                        Content="СОЗДАТЬ ТОЧКУ"
+                                                        HorizontalAlignment="Left" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource Card}" Margin="8,0,0,8">
+                                            <StackPanel>
+                                                <TextBlock Text="ЖУРНАЛ ОТКАТА" Style="{StaticResource SectionCaption}" />
+                                                <TextBlock Text="{Binding JournalStatusText}"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           FontSize="13"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,12" />
+                                                <Button Style="{StaticResource DangerButton}"
+                                                        Command="{Binding RollbackCommand}"
+                                                        Content="ПОЛНЫЙ ОТКАТ ИЗМЕНЕНИЙ"
+                                                        HorizontalAlignment="Left" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource Card}" Margin="0,8,8,0">
+                                            <StackPanel>
+                                                <TextBlock Text="ПРОФИЛИ" Style="{StaticResource SectionCaption}" />
+                                                <TextBlock Text="{Binding ProfileStatusText}"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontSize="10.5"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,12" />
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Style="{StaticResource GhostButton}"
+                                                            Command="{Binding ExportProfileCommand}"
+                                                            Content="ЭКСПОРТ ПРОФИЛЯ" />
+                                                    <Button Style="{StaticResource GhostButton}"
+                                                            Command="{Binding ImportProfileCommand}"
+                                                            Content="ИМПОРТ ПРОФИЛЯ"
+                                                            Margin="8,0,0,0" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource Card}" Margin="8,8,0,0">
+                                            <StackPanel>
+                                                <TextBlock Text="ХРАНИЛИЩЕ БЭКАПОВ" Style="{StaticResource SectionCaption}" />
+                                                <TextBlock Text="{Binding BackupsPath}"
+                                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                                           FontSize="10"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,0,0,8" />
+                                                <TextBlock Text="{Binding BackupsSizeText}"
+                                                           Foreground="{StaticResource TextMutedBrush}"
+                                                           FontSize="10"
+                                                           Margin="0,0,0,12" />
+                                                <Button Style="{StaticResource GhostButton}"
+                                                        Command="{Binding OpenBackupsCommand}"
+                                                        Content="ОТКРЫТЬ ПАПКУ BACKUPS"
+                                                        HorizontalAlignment="Left" />
+                                                <Button Style="{StaticResource GhostButton}"
+                                                        Command="{Binding ImportRegCommand}"
+                                                        Content="ИМПОРТ .REG"
+                                                        HorizontalAlignment="Left"
+                                                        Margin="0,8,0,0" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+
+                                    <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="ПОСЛЕДНИЕ ФАЙЛЫ БЭКАПА" Style="{StaticResource SectionCaption}" />
+                                            <ScrollViewer MaxHeight="260" VerticalScrollBarVisibility="Auto">
+                                                <ItemsControl ItemsSource="{Binding BackupEntries}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border Style="{StaticResource InnerCard}" Margin="0,0,0,6" Padding="12,9">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBlock Text="{Binding Name}"
+                                                                               Foreground="{StaticResource TextPrimaryBrush}"
+                                                                               FontSize="10.5"
+                                                                               TextTrimming="CharacterEllipsis" />
+                                                                    <TextBlock Grid.Column="1"
+                                                                               Text="{Binding CreatedText}"
+                                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                                               FontSize="9.5"
+                                                                               Margin="12,0,0,0" />
+                                                                    <TextBlock Grid.Column="2"
+                                                                               Text="{Binding SizeText}"
+                                                                               Foreground="{StaticResource TextMutedBrush}"
+                                                                               FontSize="9.5"
+                                                                               Margin="12,0,0,0" />
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+                    </TabControl>
+
+                    <!-- ========== LIVE SEARCH OVERLAY ========== -->
+                    <Grid Background="{StaticResource WindowBgBrush}"
+                          Visibility="{Binding IsSearching, Converter={StaticResource BoolToVisibility}}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="30,20,30,30">
+                                <TextBlock Text="Поиск" Style="{StaticResource PageTitle}" />
+                                <TextBlock Text="{Binding SearchSummary}" Style="{StaticResource PageSubtitle}" />
+                                <ItemsControl ItemsSource="{Binding SearchResults}"
+                                              ItemTemplate="{StaticResource TweakCardTemplate}"
+                                              Margin="0,20,0,0">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- ========== BUSY OVERLAY ========== -->
+                    <Grid Background="#B80E0D16"
+                          Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid Width="48" Height="48" HorizontalAlignment="Center">
+                                <Ellipse Stroke="#2D2A44" StrokeThickness="3" />
+                                <Path Data="M24,4 A20,20 0 0 1 44,24"
+                                      Stroke="{StaticResource AccentGradient}"
+                                      StrokeThickness="3"
+                                      StrokeStartLineCap="Round">
+                                    <Path.RenderTransform>
+                                        <RotateTransform x:Name="BusySpin" CenterX="24" CenterY="24" />
+                                    </Path.RenderTransform>
+                                    <Path.Triggers>
+                                        <EventTrigger RoutedEvent="Loaded">
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="BusySpin"
+                                                                     Storyboard.TargetProperty="Angle"
+                                                                     From="0"
+                                                                     To="360"
+                                                                     Duration="0:0:1"
+                                                                     RepeatBehavior="Forever" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </Path.Triggers>
+                                </Path>
+                            </Grid>
+                            <TextBlock Text="{Binding BusyText}"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="12.5"
+                                       HorizontalAlignment="Center"
+                                       Margin="0,16,0,0" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- ========== TOAST ========== -->
+                    <Border Background="#11101B"
+                            BorderBrush="{Binding ToastAccent}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="15,12"
+                            MaxWidth="480"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Margin="0,0,28,24"
+                            Visibility="{Binding ToastVisible, Converter={StaticResource BoolToVisibility}}">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#000000" BlurRadius="18" ShadowDepth="0" Opacity="0.65" />
+                        </Border.Effect>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" Fill="{Binding ToastAccent}" VerticalAlignment="Top" Margin="0,4,10,0" />
+                            <TextBlock Text="{Binding ToastText}"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontSize="11.5"
+                                       TextWrapping="Wrap"
+                                       MaxWidth="420" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
