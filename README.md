@@ -4,6 +4,7 @@
 ![.NET](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)
 ![UI](https://img.shields.io/badge/UI-WPF-7B2FBE)
 ![Build](https://img.shields.io/badge/build-single--file%20exe-34D399)
+![Download](https://img.shields.io/github/v/release/chilinfr/GameOptimizer?label=download)
 
 Нативный десктопный оптимизатор Windows 10/11 для гейминга: таймеры ядра, BCD, MMCSS,
 GPU/прерывания, электропитание, память, NVMe и сеть. Написан на **C# / .NET 8 WPF**
