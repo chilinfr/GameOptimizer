@@ -1,0 +1,10 @@
+bin/
+obj/
+publish/
+*.pdb
+Backups/
+*.user
+*.suo
+.vs/
+.idea/
+*.log
